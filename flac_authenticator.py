@@ -2,11 +2,20 @@ import sys
 import os
 import numpy as np
 import soundfile as sf
+import time
+
+BITRATE_CUTOFFS_DESC = {
+    320: 20500,
+    256: 20000,
+    192: 19000,
+    160: 17000,
+    128: 16000,
+    96: 13000,
+    64: 11000
+}
 
 def load_flac(file_path):
-    """
-    Loads a FLAC file and returns the audio data and sample rate.
-    """
+    """Loads a FLAC file and returns the audio data and sample rate."""
     try:
         data, samplerate = sf.read(file_path)
         return data, samplerate
@@ -14,35 +23,57 @@ def load_flac(file_path):
         print(f"Error loading file: {e}")
         return None, None
 
-def divide_into_frames(data, frame_size=4096, step=2048):
-    """
-    Divides audio data into overlapping frames for analysis.
-    Returns a list/array of frames.
-    """
+
+def divide_into_frames(data, frame_size=16384, step=4096):
+    """Divides audio data into overlapping frames for analysis."""
     frames = []
     for start in range(0, len(data) - frame_size, step):
         frames.append(data[start:start+frame_size])
     return frames
 
-def analyze_frame(frame, samplerate):
-    """
-    Placeholder function to analyze a single frame.
-    For now, just returns a dummy max frequency.
-    """
-    # TODO: Implement FFT and frequency analysis here
-    max_freq = 20000  # placeholder
-    return max_freq
 
-def determine_file_status(max_freqs):
+def analyze_frame(frame, samplerate, cutoff_freq=19000):
     """
-    Placeholder function to determine if the file is upscaled or original.
+    Analyze a frame to compute the ratio of spectral energy above cutoff_freq.
+    Returns a float ratio between 0 and 1.
     """
-    # TODO: Implement cutoff comparison and confidence calculation
-    confidence = 0.85  # dummy confidence
-    if np.mean(max_freqs) > 19000:
-        return "Likely ORIGINAL", confidence
+    if frame.ndim > 1:
+        frame = frame[:, 0]
+
+    if np.max(np.abs(frame)) < 1e-5:
+        return 0.0
+
+    windowed = frame * np.hanning(len(frame))
+    spectrum = np.abs(np.fft.rfft(windowed))
+    freqs = np.fft.rfftfreq(len(frame), d=1 / samplerate)
+
+    total_energy = np.sum(spectrum)
+    if total_energy == 0:
+        return 0.0
+
+    high_band_energy = np.sum(spectrum[freqs > cutoff_freq])
+    ratio = high_band_energy / total_energy
+    return ratio
+
+
+def determine_file_status(ratios, frames, samplerate, cutoff_freq=19000):
+    """
+    Determines if the FLAC is likely original or upscaled
+    based on the fraction of frames with meaningful energy above cutoff_freq.
+    """
+    ratios = np.array(ratios)
+    if len(ratios) == 0:
+        return "No audio data.", 0.0
+
+    ratio_threshold = 0.001  # 0.1% of total energy above cutoff
+    active_frames = np.sum(ratios > ratio_threshold)
+    active_fraction = active_frames / len(ratios)
+
+    if active_fraction > 0.05:
+        return "Likely ORIGINAL", active_fraction
     else:
-        return "Likely UPSCALED", confidence
+        return "Likely UPSCALED", 1 - active_fraction
+
 
 def main():
     # 1. Get file path from command-line argument
@@ -56,24 +87,29 @@ def main():
         return
 
     # 2. Load audio
+    start_time = time.time()
+
     data, samplerate = load_flac(file_path)
     if data is None:
         return
-
     print(f"Loaded '{file_path}' with sample rate {samplerate} Hz, {len(data)} samples.")
 
     # 3. Divide into frames
     frames = divide_into_frames(data)
     print(f"Divided audio into {len(frames)} frames for analysis.")
 
-    # 4. Analyze each frame (placeholder)
-    max_freqs = [analyze_frame(frame, samplerate) for frame in frames]
+    # 4. Analyze each frame
+    ratios = [analyze_frame(frame, samplerate) for frame in frames]
+    print(f"Analyzed {len(frames)} frames ({sum(r > 0 for r in ratios)} active).")
 
-    # 5. Determine file status (placeholder)
-    status, confidence = determine_file_status(max_freqs)
+    # 5. Determine file status
+    status, confidence = determine_file_status(ratios, frames, samplerate)
 
     # 6. Print results
     print(f"Result: {status} (Confidence: {confidence*100:.1f}%)")
+    elapsed = time.time() - start_time
+    print(f"Processing time: {elapsed:.2f} seconds")
+
 
 if __name__ == "__main__":
     main()
