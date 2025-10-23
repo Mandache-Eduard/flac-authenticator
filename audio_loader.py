@@ -1,3 +1,5 @@
+import soundfile as sf
+
 def load_flac(file_path):
     """Loads a FLAC file and returns the audio data and sample rate."""
     try:

@@ -10,20 +10,40 @@ BITRATE_CUTOFFS_DESC = {
     64: 11000
 }
 
-def determine_file_status(ratios):
+def determine_file_status(ratios, samplerate):
     """
-    Determines if the FLAC is likely original or upscaled
-    based on the fraction of frames with meaningful energy above cutoff_freq.
+    Determines if the FLAC is likely original or upscaled,
+    and if upscaled, estimates the source bitrate.
+    Uses max frequency across significant frames and match-case.
     """
+    cutoff = 0
     ratios = np.array(ratios)
     if len(ratios) == 0:
         return "No audio data.", 0.0
 
-    ratio_threshold = 0.001  # 0.1% of total energy above cutoff
-    active_frames = np.sum(ratios > ratio_threshold)
-    active_fraction = active_frames / len(ratios)
+    # Filter out near-silent frames
+    ratio_threshold = 0.0000001  # % of total energy above cutoff
+    significant_ratios = ratios[ratios > ratio_threshold]
 
-    if active_fraction > 0.05:
-        return "Likely ORIGINAL", active_fraction
-    else:
-        return "Likely UPSCALED", 1 - active_fraction
+    if len(significant_ratios) == 0:
+        return "Likely UPSCALED (no significant frames)", 0.0
+
+    # Nyquist frequency based on actual sample rate
+    nyquist = samplerate / 2
+
+    # Maximum frequency across significant frames
+    max_ratio = significant_ratios.max()
+    max_freq = max_ratio * nyquist
+
+    # Determine upscaled source using descending cutoff order
+    status = "Likely ORIGINAL"  # default if max_freq exceeds all cutoffs
+    for kbps, cutoff in sorted(BITRATE_CUTOFFS_DESC.items()):
+        match max_freq:
+            case f if f < cutoff:
+                status = f"Likely UPSCALED from ≤{kbps} kbps"
+                break
+
+    # Confidence: fraction of significant frames below the same cutoff
+    confidence = np.sum(significant_ratios * nyquist < cutoff) / len(significant_ratios)
+
+    return status, confidence
