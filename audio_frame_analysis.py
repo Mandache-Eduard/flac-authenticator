@@ -44,6 +44,12 @@ def analyze_frame(frame, samplerate, effective_cutoff, fft_cache_list=None):
     if frame.ndim > 1:
         frame = frame[:, 0]
 
+    # Guarantee finite frame samples (prevents NaN max/fft propagation)
+    if not np.all(np.isfinite(frame)):
+        if fft_cache_list is not None:
+            fft_cache_list.append(FrameFFT(np.array([]), np.array([]), 0.0))
+        return 0.0
+
     if np.max(np.abs(frame)) < 1e-5:
         if fft_cache_list is not None:
             fft_cache_list.append(FrameFFT(np.array([]), np.array([]), 0.0))
@@ -53,15 +59,19 @@ def analyze_frame(frame, samplerate, effective_cutoff, fft_cache_list=None):
     spectrum = np.abs(np.fft.rfft(windowed))
     freqs = np.fft.rfftfreq(len(frame), d=1 / samplerate)
 
-    total_energy = np.sum(spectrum)
-    if total_energy == 0:
-        if fft_cache_list is not None:  # NEW
+    total_energy = float(np.sum(spectrum))
+    if total_energy <= 0.0 or not np.isfinite(total_energy):
+        if fft_cache_list is not None:
             fft_cache_list.append(FrameFFT(freqs, spectrum, 0.0))
         return 0.0
 
     if fft_cache_list is not None:
-        fft_cache_list.append(FrameFFT(freqs_hz=freqs, spectrum_abs=spectrum, total_energy=float(total_energy)))
+        fft_cache_list.append(FrameFFT(freqs_hz=freqs, spectrum_abs=spectrum, total_energy=total_energy))
 
     high_band_energy = np.sum(spectrum[freqs > effective_cutoff])
     ratio = high_band_energy / total_energy
+
+    if not np.isfinite(ratio):
+        return 0.0
+
     return ratio
