@@ -4,6 +4,7 @@ import subprocess
 def call_spek(file_path):
     if not shutil.which("spek"):
         print("Spek not detected. Please install it from https://spek.cc and ensure it's in your PATH.")
+        return
     # Run Spek via command line
     try:
         subprocess.run(["spek", file_path], check=True)
