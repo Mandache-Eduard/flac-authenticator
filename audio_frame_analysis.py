@@ -25,7 +25,7 @@ def calculate_nyquist_frequency(samplerate):
     # is applied in calculate_effective_cutoff, not here.
     return nyquist_frequency
 
-def calculate_effective_cutoff(samplerate, nyquist_frequency):
+def calculate_effective_cutoff(nyquist_frequency):
     # Keep the test frequency meaningfully below Nyquist
     effective_cutoff = min(CUTOFF_HZ, max(0.0, nyquist_frequency - NYQUIST_SAFETY_BAND_HZ))
     return effective_cutoff

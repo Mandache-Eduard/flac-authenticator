@@ -34,7 +34,7 @@ def main():
 
     # 4. Calculate (once per file, then reuse everywhere)
     nyquist_frequency = calculate_nyquist_frequency(samplerate)
-    effective_cutoff = calculate_effective_cutoff(samplerate, nyquist_frequency)
+    effective_cutoff = calculate_effective_cutoff(nyquist_frequency)
 
     # 5. Analyze each frame — use the same 'effective_cutoff' for all frames; also collect FFT cache for later reuse
     fft_cache = []
