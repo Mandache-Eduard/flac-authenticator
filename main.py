@@ -6,13 +6,22 @@ from audio_frame_analysis import analyze_frame, divide_into_frames, calculate_ny
 from audio_loader import load_flac
 from file_status_determination import determine_file_status
 from file_status_determination import debug_energy_ratios
-from external_tools import call_spek
+from external_tools import call_spek, spek_manual
 
 
 def main():
+    # 0. Get manuals and documentation
+    if sys.argv[1] == "help":
+        print("Usage: py main.py <path_to_flac_file> (including .flac extension)")
+        return
+
+    if sys.argv[1] == "spek_man":
+        spek_manual()
+        return
+
     # 1. Get file path from command-line argument
     if len(sys.argv) < 2:
-        print("Usage: py main.py <path_to_flac_file>")
+        print("Wrong number of arguments - check usage using 'py help'")
         return
 
     file_path = sys.argv[1]
