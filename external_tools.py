@@ -1,4 +1,6 @@
+# external_tools.py
 import shutil
+import textwrap
 import subprocess
 
 def call_spek(file_path):
@@ -14,31 +16,39 @@ def call_spek(file_path):
         print(f"Spek exited with an error: {e}")
 
 def spek_manual():
-    print("""
-        Menu
-    
-    Ctrl-O : Open a new file.
-    
-    Ctrl-S : Save the spectrogram as an image file.
-    
-    Ctrl-E : Show the preferences dialog.
-    
-    F1 : Open online manual in the browser.
-    
-    Shift-F1 : Show the about dialog.
-    
-    Spectrogram
-    
-    c, C : Change the audio channel.
-    
-    f, F : Change the DFT window function.
-    
-    l, L : Change the lower limit of the dynamic range in dBFS.
-    
-    p, P : Change the palette.
-    
-    s, S : Change the audio stream.
-    
-    u, U : Change the upper limit of the dynamic range in dBFS.
-    
-    w, W : Change the DFT window size.""")
+    term_width = shutil.get_terminal_size(fallback=(80, 20)).columns
+
+    text = """
+SPEK - keyboard shortcuts
+
+Menu
+----------------------------------------
+Ctrl-O       : Open a new file
+Ctrl-S       : Save the spectrogram as an image file
+Ctrl-E       : Show the preferences dialog
+F1           : Open online manual in the browser
+Shift-F1     : Show the about dialog
+
+Spectrogram
+----------------------------------------
+Navigation rule:
+  lowercase letter         -> next option
+  uppercase letter (Shift) -> previous option
+
+c / C        : Change the audio channel
+f / F        : Change the DFT window function
+l / L        : Change the lower limit of the dynamic range (dBFS)
+p / P        : Change the palette
+s / S        : Change the audio stream
+u / U        : Change the upper limit of the dynamic range (dBFS)
+w / W        : Change the DFT window size
+""".strip("\n")
+
+    wrapped_lines = []
+    for line in text.splitlines():
+        if not line.strip():
+            wrapped_lines.append("")
+        else:
+            wrapped_lines.extend(textwrap.wrap(line, width=term_width))
+
+    print("\n".join(wrapped_lines))

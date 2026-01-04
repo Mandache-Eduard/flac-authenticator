@@ -1,3 +1,4 @@
+# file_status_determination.py
 import numpy as np
 
 # --- Classifier configuration (tunable) ---
@@ -216,4 +217,3 @@ def determine_file_status(ratios, effective_cutoff, frame_ffts=None, probe_cutof
     # Fallback: generic upscaled verdict (no cache or inconclusive)
     confidence = 1.0 - active_fraction
     return "Likely UPSCALED", confidence
-

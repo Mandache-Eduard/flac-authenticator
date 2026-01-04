@@ -1,68 +1,37 @@
 import os
 import sys
-import time
 
-from audio_frame_analysis import analyze_frame, divide_into_frames, calculate_nyquist_frequency, calculate_effective_cutoff
-from audio_loader import load_flac
-from file_status_determination import determine_file_status
-from file_status_determination import debug_energy_ratios
-from external_tools import call_spek, spek_manual
-
+from external_tools import spek_manual
+from run_modes import run_single_file, run_folder_batch
 
 def main():
-    # 0. Get manuals and documentation
-    if sys.argv[1] == "help":
+    # 0. Set instructions and manuals
+    if len(sys.argv) < 2:
+        print("Wrong number of arguments - check usage using 'py main.py help'")
+        return
+
+    elif sys.argv[1] == "help":
         print("Usage: py main.py <path_to_flac_file> (including .flac extension)")
+        print("For example: python main.py X:\\path\\to\\file.flac")
+        print("For Spek shortcuts use: python main.py spek_man")
         return
 
     if sys.argv[1] == "spek_man":
         spek_manual()
         return
 
-    # 1. Get file path from command-line argument
-    if len(sys.argv) < 2:
-        print("Wrong number of arguments - check usage using 'py help'")
-        return
+    # 1. Get file path from command-line argument and determine running mode
+    path = sys.argv[1]
 
-    file_path = sys.argv[1]
-    if not os.path.isfile(file_path) or not file_path.lower().endswith(".flac"):
+    if os.path.isfile(path) and path.lower().endswith(".flac"):
+        run_single_file(path, verbose=True, open_spek=True)
+
+    elif os.path.isdir(path):
+        run_folder_batch(path)
+
+    else:
         print("Invalid file path or not a FLAC file.")
         return
-
-    # 2. Load audio
-    start_time = time.time()
-
-    data, samplerate = load_flac(file_path)
-    if data is None:
-        return
-    print(f"Loaded '{file_path}' with sample rate {samplerate} Hz, {len(data)} samples.")
-
-    # 3. Divide into frames
-    frames = divide_into_frames(data)
-    print(f"Divided audio into {len(frames)} frames for analysis.")
-
-    # 4. Calculate (once per file, then reuse everywhere)
-    nyquist_frequency = calculate_nyquist_frequency(samplerate)
-    effective_cutoff = calculate_effective_cutoff(nyquist_frequency)
-
-    # 5. Analyze each frame — use the same 'effective_cutoff' for all frames; also collect FFT cache for later reuse
-    fft_cache = []
-    ratios = [analyze_frame(frame, samplerate, effective_cutoff, fft_cache_list=fft_cache) for frame in frames]
-    print(f"Analyzed {len(frames)} frames ({sum(r > 0 for r in ratios)} active).")
-
-    # 6. Print results and spectrogram
-    status, confidence = determine_file_status(ratios, effective_cutoff, frame_ffts=fft_cache)  # CHANGED: pass cache
-    print(f"Result: {status} (Confidence: {confidence * 100:.1f}%)")
-
-    elapsed = time.time() - start_time
-    print(f"Processing time: {elapsed:.2f} seconds")
-
-    summary = debug_energy_ratios(ratios)
-    from pprint import pprint
-    print("Energy-above-cutoff summary:")
-    pprint(summary)
-
-    call_spek(file_path)
 
 if __name__ == "__main__":
     main()
