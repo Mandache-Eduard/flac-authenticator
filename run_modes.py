@@ -1,13 +1,27 @@
 # run_modes.py
 import time
 import os
+from typing import Any, Dict, Final, List
 
 from audio_frame_analysis import analyze_frame, divide_into_frames, calculate_nyquist_frequency, \
     calculate_effective_cutoff
 from audio_loader import load_flac
 from external_tools import call_spek
 from file_status_determination import determine_file_status, debug_energy_ratios
+from data_and_error_logging import append_result_to_csv
 from pprint import pprint
+
+RESULT_FIELDNAMES: Final[List[str]] = [
+    "path",
+    "status",
+    "confidence",
+    "elapsed_s",
+    "samplerate_hz",
+    "num_samples",
+    "num_frames",
+    "nyquist_frequency_hz",
+    "effective_cutoff_hz",
+]
 
 def run_single_file(file_path, verbose, open_spek):
 
@@ -30,6 +44,22 @@ def run_single_file(file_path, verbose, open_spek):
     status, confidence = determine_file_status(ratios, effective_cutoff_hz, frame_ffts=fft_cache)  # CHANGED: pass cache
     #summary = debug_energy_ratios(ratios)
     elapsed = time.time() - start_time
+
+    # 6. Build result using the single schema list (prevents key drift)
+    result: Dict[str, Any] = {k: "" for k in RESULT_FIELDNAMES}
+    result.update(
+        {
+            "path": file_path,
+            "status": status,
+            "confidence": confidence,
+            "elapsed_s": elapsed,
+            "samplerate_hz": samplerate,
+            "num_samples": len(data),
+            "num_frames": len(frames),
+            "nyquist_frequency_hz": nyquist_frequency_hz,
+            "effective_cutoff_hz": effective_cutoff_hz,
+        }
+    )
 
     if verbose:
         print(f"Loaded '{file_path}' with sample rate {samplerate} Hz, {len(data)} samples.")
@@ -58,19 +88,18 @@ def run_single_file(file_path, verbose, open_spek):
     return result
 
 def run_folder_batch(folder_path):
+    # Log file saved in the root (main) folder being scanned
+    csv_path = os.path.join(folder_path, "flac_scan_results.csv")
     for dirpath, dirnames, filenames in os.walk(folder_path, topdown=False, onerror=None, followlinks=False):
         for filename in filenames:
             full_path = os.path.join(dirpath, filename)
             if not full_path.lower().endswith(".flac"):
                 continue
-            else:
+
+            try:
                 result = run_single_file(full_path, verbose=False, open_spek=False)
-                path = result["path"]
-                status = result["status"]
-                confidence = result["confidence"]
-                elapsed_s = result["elapsed_s"]
-                samplerate_hz = result["samplerate_hz"]
-                num_samples = result["num_samples"]
-                num_frames = result["num_frames"]
-                nyquist_frequency_hz = result["nyquist_frequency_hz"]
-                effective_cutoff_hz = result["effective_cutoff_hz"]
+            except Exception:
+                # Keep silent in terminal; still record a minimal row
+                result = {"path": full_path, "status": "ERROR"}
+
+            append_result_to_csv(csv_path, result)
