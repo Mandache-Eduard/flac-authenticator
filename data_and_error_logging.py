@@ -13,6 +13,7 @@ RESULT_FIELDNAMES = [
     "num_frames",
     "nyquist_frequency_hz",
     "effective_cutoff_hz",
+    "per_cutoff_active_fraction",
 ]
 
 def append_result_to_csv(

@@ -74,7 +74,7 @@ def debug_energy_ratios(ratios):
         "hf_ratio_mean": float(np.mean(x)),
     }
 
-def _active_fraction_from_cache(frame_ffts, cutoff_hz, energy_ratio_threshold, drop_threshold):
+def _active_fraction_from_cache(frame_ffts, cutoff_hz, energy_ratio_threshold, ratio_drop_threshold):
     """Compute active_fraction at a given cutoff using cached FFTs (no re-FFT)."""
     if not frame_ffts:
         return 0.0
@@ -96,7 +96,7 @@ def _active_fraction_from_cache(frame_ffts, cutoff_hz, energy_ratio_threshold, d
         else:
             ratio = float(np.sum(f.spectrum_abs[idx:]) / f.total_energy)
 
-        if ratio > float(drop_threshold):
+        if ratio > float(ratio_drop_threshold):
             total += 1
             if ratio > float(energy_ratio_threshold):
                 active += 1
@@ -104,7 +104,7 @@ def _active_fraction_from_cache(frame_ffts, cutoff_hz, energy_ratio_threshold, d
         return 0.0
     return active / total
 
-def _estimate_bitrate_from_cache(frame_ffts, effective_cutoff, energy_ratio_threshold, drop_threshold, probe_cutoffs_hz=None):
+def _estimate_bitrate_from_cache(frame_ffts, effective_cutoff, energy_ratio_threshold, ratio_drop_threshold, probe_cutoffs_hz=None):
     """
     Probe multiple cutoffs (ascending). Return (label:str, confidence:float, per_cutoff_fractions:dict)
     Select the first cutoff (ascending) that becomes quiet while the previous cutoff is loud.
@@ -117,11 +117,11 @@ def _estimate_bitrate_from_cache(frame_ffts, effective_cutoff, energy_ratio_thre
     if not probe_list:
         return None, None, {}
 
-    per_cutoff_frac = {}
+    per_cutoff_fractions = {}
     # 1) Compute fractions for ALL candidate cutoffs (NO early break)
     for c in probe_list:
-        frac = _active_fraction_from_cache(frame_ffts, c, energy_ratio_threshold, drop_threshold)
-        per_cutoff_frac[c] = frac
+        frac = _active_fraction_from_cache(frame_ffts, c, energy_ratio_threshold, ratio_drop_threshold)
+        per_cutoff_fractions[c] = frac
 
     # 2) Select the FIRST cutoff where activity becomes "quiet" (ascending),
     #    and the previous cutoff (if any) was "loud".
@@ -129,7 +129,7 @@ def _estimate_bitrate_from_cache(frame_ffts, effective_cutoff, energy_ratio_thre
     selected_frac = None
 
     for idx, c in enumerate(probe_list):  # ascending
-        frac = per_cutoff_frac[c]
+        frac = per_cutoff_fractions[c]
         if frac <= MAX_HF_ACTIVE_FRACTION_FOR_CUTOFF:
             if idx == 0:
                 # No previous cutoff to compare; accept if quiet at the very first cutoff
@@ -137,7 +137,7 @@ def _estimate_bitrate_from_cache(frame_ffts, effective_cutoff, energy_ratio_thre
                 selected_frac = frac
                 break
             prev_c = probe_list[idx - 1]
-            prev_frac = per_cutoff_frac[prev_c]
+            prev_frac = per_cutoff_fractions[prev_c]
             if prev_frac >= MIN_PREV_CUTOFF_ACTIVE_FRACTION:
                 selected_cutoff = c
                 selected_frac = frac
@@ -145,20 +145,20 @@ def _estimate_bitrate_from_cache(frame_ffts, effective_cutoff, energy_ratio_thre
 
     if selected_cutoff is None:
         # fallback: if any quiet cutoffs exist, take the **lowest** quiet cutoff (safest upper bound)
-        quiet_cutoffs = [c for c in probe_list if per_cutoff_frac[c] <= MAX_HF_ACTIVE_FRACTION_FOR_CUTOFF]
+        quiet_cutoffs = [c for c in probe_list if per_cutoff_fractions[c] <= MAX_HF_ACTIVE_FRACTION_FOR_CUTOFF]
         if quiet_cutoffs:
             selected_cutoff = quiet_cutoffs[0]
-            selected_frac = per_cutoff_frac[selected_cutoff]
+            selected_frac = per_cutoff_fractions[selected_cutoff]
         else:
-            return (None, None, per_cutoff_frac)  # ← 3-tuple
+            return (None, None, per_cutoff_fractions)  # ← 3-tuple
 
     kbps = LOSSY_CUTOFF_PROFILES.get(selected_cutoff)
     if kbps is None:
-        return (None, None, per_cutoff_frac)  # ← 3-tuple
+        return (None, None, per_cutoff_fractions)  # ← 3-tuple
 
-    label = f"Likely UPSCALED from ≤{kbps} kbps"
+    label = f"Likely UPSCALED from <={kbps} kbps"
     confidence = float(np.clip(1.0 - (selected_frac or 0.0), 0.0, 1.0))
-    return (label, confidence, per_cutoff_frac)  # ← 3-tuple (normal case)
+    return (label, confidence, per_cutoff_fractions)  # ← 3-tuple (normal case)
 
 def determine_file_status(ratios, effective_cutoff, frame_ffts=None, probe_cutoffs_hz=None):
     """
@@ -195,25 +195,15 @@ def determine_file_status(ratios, effective_cutoff, frame_ffts=None, probe_cutof
             z = (x - t) / (1.0 - t)  # x in [t..1] -> z in [0..1]
             z = max(0.0, min(1.0, z))
             confidence = float(z ** float(ORIGINAL_CONFIDENCE_GAMMA))
-        return "Likely ORIGINAL", confidence
+        return "Likely ORIGINAL", confidence, None
 
     # Otherwise: little to no HF energy above the cutoff → try bitrate estimation if cache is available
     if frame_ffts:
-        label, conf2, fractions = _estimate_bitrate_from_cache(
-            frame_ffts=frame_ffts,
-            effective_cutoff=effective_cutoff,
-            energy_ratio_threshold=ENERGY_RATIO_THRESHOLD,
-            drop_threshold=RATIO_DROP_THRESHOLD,
-            probe_cutoffs_hz=probe_cutoffs_hz
-        ) or (None, None, {})
-
-        if fractions:
-            from pprint import pprint
-            print("[bitrate-debug] per_cutoff_active_fraction:")
-            pprint({k: round(v, 4) for k, v in fractions.items()})
+        label, conf2, per_cutoff_fractions = _estimate_bitrate_from_cache(frame_ffts, effective_cutoff, ENERGY_RATIO_THRESHOLD, RATIO_DROP_THRESHOLD, probe_cutoffs_hz)
         if label is not None:
-            return label, conf2
+            return label, conf2, per_cutoff_fractions
+         # estimation ran but didn't produce a label; still pass fractions upward
+        return "Inconclusive (no cutoff match)", 0.0, per_cutoff_fractions
 
-    # Fallback: generic upscaled verdict (no cache or inconclusive)
-    confidence = 1.0 - active_fraction
-    return "Likely UPSCALED", confidence
+    # no cache available → cannot estimate bitrate profile
+    return "Inconclusive (no FFT cache)", 0.0, {}

@@ -1,8 +1,9 @@
 # run_modes.py
 import time
 import os
-from typing import Any, Dict, Final, List
+from typing import Any, Dict, Final, List, Optional
 
+from datetime import datetime
 from audio_frame_analysis import analyze_frame, divide_into_frames, calculate_nyquist_frequency, \
     calculate_effective_cutoff
 from audio_loader import load_flac
@@ -21,10 +22,19 @@ RESULT_FIELDNAMES: Final[List[str]] = [
     "num_frames",
     "nyquist_frequency_hz",
     "effective_cutoff_hz",
+    "per_cutoff_active_fraction",
 ]
 
-def run_single_file(file_path, verbose, open_spek):
+def _format_fractions_for_csv(fractions: Optional[Dict[float, float]]) -> str:
+    """
+    Format {cutoff_hz: active_fraction} into a single CSV-friendly string.
+    Example: "13000=0.8123;16000=0.4550;20500=0.0123"
+    """
+    if not fractions:
+        return ""
+    return ";".join(f"{int(k)}={v:.4f}" for k, v in sorted(fractions.items()))
 
+def run_single_file(file_path, verbose, open_spek):
     # 1. Load audio
     start_time = time.time()
     data, samplerate = load_flac(file_path)
@@ -40,8 +50,8 @@ def run_single_file(file_path, verbose, open_spek):
     fft_cache = []
     ratios = [analyze_frame(frame, samplerate, effective_cutoff_hz, fft_cache_list=fft_cache) for frame in frames]
 
-    # 5. Print results and spectrogram
-    status, confidence = determine_file_status(ratios, effective_cutoff_hz, frame_ffts=fft_cache)  # CHANGED: pass cache
+    # 5. Determine status + confidence + fractions + elapsed time
+    status, confidence, fractions = determine_file_status(ratios, effective_cutoff_hz, frame_ffts=fft_cache)  # CHANGED: pass cache
     #summary = debug_energy_ratios(ratios)
     elapsed = time.time() - start_time
 
@@ -58,6 +68,7 @@ def run_single_file(file_path, verbose, open_spek):
             "num_frames": len(frames),
             "nyquist_frequency_hz": nyquist_frequency_hz,
             "effective_cutoff_hz": effective_cutoff_hz,
+            "per_cutoff_active_fraction": _format_fractions_for_csv(fractions),
         }
     )
 
@@ -70,26 +81,22 @@ def run_single_file(file_path, verbose, open_spek):
         print("Energy-above-cutoff summary:")
         #pprint(summary)
 
+        if fractions:
+            print("[bitrate-debug] per_cutoff_active_fraction:")
+            for k, v in sorted(fractions.items()):
+                print(f"  {int(k)}: {v:.4f}")
+
     if open_spek:
         call_spek(file_path)
-
-    result = {
-        "path": file_path,
-        "status": status,
-        "confidence": confidence,
-        "elapsed_s": elapsed,
-        "samplerate_hz": samplerate,
-        "num_samples": len(data),
-        "num_frames": len(frames),
-        "nyquist_frequency_hz": nyquist_frequency_hz,
-        "effective_cutoff_hz": effective_cutoff_hz,
-    }
 
     return result
 
 def run_folder_batch(folder_path):
     # Log file saved in the root (main) folder being scanned
-    csv_path = os.path.join(folder_path, "flac_scan_results.csv")
+    current_datetime = datetime.now()
+    current_daytime_formatted = current_datetime.strftime('%Y-%B-%d__%H-%M-%S')
+    csv_path = os.path.join(folder_path, current_daytime_formatted + ".csv")
+
     for dirpath, dirnames, filenames in os.walk(folder_path, topdown=False, onerror=None, followlinks=False):
         for filename in filenames:
             full_path = os.path.join(dirpath, filename)
