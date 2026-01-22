@@ -2,7 +2,7 @@
 <br />
 <div align="center">
   <a href="https://github.com/Mandache-Eduard/flac-authenticator">
-    <img src="Images/lflac_authenticator_project_picture.jpg" alt="Logo" width="80" height="80">
+    <img src="Images/flac_authenticator_project_picture.jpg" alt="Logo" width="80" height="80">
   </a>
 
 <h3 align="center">FLAC Authenticator</h3>
