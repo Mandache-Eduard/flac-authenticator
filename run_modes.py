@@ -2,7 +2,7 @@
 import time
 import os
 from typing import Any, Dict, Final, List, Optional
-
+from tqdm import tqdm
 from datetime import datetime
 from audio_frame_analysis import analyze_frame, divide_into_frames, calculate_nyquist_frequency, \
     calculate_effective_cutoff
@@ -92,21 +92,25 @@ def run_single_file(file_path, verbose, open_spek):
     return result
 
 def run_folder_batch(folder_path):
-    # Log file saved in the root (main) folder being scanned
+    start_time = time.time()
     current_datetime = datetime.now()
     current_daytime_formatted = current_datetime.strftime('%Y-%B-%d__%H-%M-%S')
     csv_path = os.path.join(folder_path, current_daytime_formatted + ".csv")
+    flac_file_paths = []
 
-    for dirpath, dirnames, filenames in os.walk(folder_path, topdown=False, onerror=None, followlinks=False):
+    print("Discovering files...")
+    for dirpath, dirnames, filenames in os.walk(folder_path, topdown=True, onerror=None, followlinks=False):
         for filename in filenames:
             full_path = os.path.join(dirpath, filename)
-            if not full_path.lower().endswith(".flac"):
-                continue
+            if full_path.lower().endswith(".flac"):
+                flac_file_paths.append(full_path)
 
-            try:
-                result = run_single_file(full_path, verbose=False, open_spek=False)
-            except Exception:
-                # Keep silent in terminal; still record a minimal row
-                result = {"path": full_path, "status": "ERROR"}
-
-            append_result_to_csv(csv_path, result)
+    print("Discovered {} files.".format(len(flac_file_paths)))
+    print("Processing files and saving results...")
+    for flac_file_path in tqdm(flac_file_paths):
+        try:
+            result = run_single_file(flac_file_path, verbose=False, open_spek=False)
+        except Exception:
+            # Keep silent in terminal; still record a minimal row
+            result = {"path": flac_file_path, "status": "ERROR"}
+        append_result_to_csv(csv_path, result)

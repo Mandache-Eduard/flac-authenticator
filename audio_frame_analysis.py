@@ -13,7 +13,7 @@ class FrameFFT:
     spectrum_abs: np.ndarray
     total_energy: float
 
-def divide_into_frames(data, frame_size=32768, step=2048):
+def divide_into_frames(data, frame_size=32768, step=16384):
     """Divides audio data into overlapping frames for analysis."""
     frames = []
     for start in range(0, len(data) - frame_size, step):
