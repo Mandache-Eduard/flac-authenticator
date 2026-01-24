@@ -2,7 +2,7 @@
 <br />
 <div align="center">
   <a href="https://github.com/Mandache-Eduard/flac-authenticator">
-    <img src="Images/flac_authenticator_project_picture.jpg" alt="Logo" width="80" height="80">
+    <img src="Images/flac_authenticator_project_picture.jpg" alt="Logo" width="450" height="450">
   </a>
 
 <h3 align="center">FLAC Authenticator</h3>
@@ -22,8 +22,6 @@ ___
     <a href="https://github.com/github_username/repo_name/issues/new?labels=enhancement&template=feature-request---.md"><strong>Request Feature</a>
   </p>
 </div>
-
-
 
 <!-- TABLE OF CONTENTS -->
 <details>
@@ -51,12 +49,10 @@ ___
   </ol>
 </details>
 
-
-
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
-This is a program that scans FLAC audio files to determine whether they are genuinely lossless or upscaled from lower-quality sources. It's my first project written in [![Python][Python-badge]][Python-url] and serves as a hands-on way to explore concepts related to data analysis and data engineering. Built as a personal hobby project, it is intended to remain free and open-source, and to provide a simple, transparent alternative to existing tools that are either paid or limited in functionality
+This is a program that scans FLAC audio files to determine whether they are genuinely lossless or upscaled from lower-quality sources. It's my first project written in [![Python][Python-shield]][Python-url] and serves as a hands-on way to explore concepts related to data analysis and data engineering. Built as a personal hobby project, it is intended to remain free and open-source, and to provide a simple, transparent alternative to existing tools that are either paid or limited in functionality
 
 ___
 
@@ -75,16 +71,7 @@ To get a local copy up and running follow these simple example steps.
 
 ___
 
-### Prerequisites
-
-This is an example of how to list things you need to use the software and how to install them.
-* npm
-  ```sh
-  npm install npm@latest -g
-  ```
-
-___
-
+<!-- INSTALLATION -->
 ### Installation
 
 1. Get a free API Key at [https://example.com](https://example.com)
@@ -105,7 +92,6 @@ ___
    git remote set-url origin github_username/repo_name
    git remote -v # confirm the changes
    ```
-
 ___
 
 <!-- USAGE EXAMPLES -->
@@ -120,10 +106,19 @@ ___
 <!-- ROADMAP -->
 ## Roadmap
 
-- [ ] Feature 1
-- [ ] Feature 2
-- [ ] Feature 3
-    - [ ] Nested Feature
+### Future features
+- [ ] Create a UI for ease of use
+    - [ ] Rewrite program for multithreading (1 thread for UI, 1 thread for file processing)
+
+### Features in development
+- [ ] Implement FFmpeg spectrogram creation for low-confidence files
+- [ ] Implement a loading bar to visualize progress
+
+### Completed features
+- [X] Save results in a log file (.CSV)
+- [X] Scan a folder structure recursively
+- [X] Scan multiple files in one run
+
 
 See the [open issues](https://github.com/github_username/repo_name/issues) for a full list of proposed features (and known issues).
 
@@ -145,40 +140,33 @@ Don't forget to give the project a star! Thanks again!
 
 ___
 
-### Top contributors:
-
-<a href="https://github.com/github_username/repo_name/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=github_username/repo_name" alt="contrib.rocks image" />
-</a>
-
-
-
 <!-- LICENSE -->
 ## License
 
-Distributed under the project_license. See `LICENSE.txt` for more information.
+Distributed under the GNU General Public License v3.0. See `LICENSE` or click the link below for more information.
+<br>
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
-
+___
 
 <!-- CONTACT -->
 ## Contact
 
-Mandache Eduard  (https://www.linkedin.com/in/eduard-mandache-89588035b/) - email@email_client.com
+Mandache Eduard
 <br>
-![LinkedIn][LinkedIn-shield]
+[![LinkedIn][LinkedIn-shield]][LinkedIn-url]
+<br>
+![Outlook](https://img.shields.io/badge/Email-Outlook-0078D4?logo=microsoft-outlook&logoColor=white)
+<br>
 Project Link: [https://github.com/Mandache-Eduard/flac-authenticator](https://github.com/Mandache-Eduard/flac-authenticator)
 
-
+___
 
 <!-- ACKNOWLEDGMENTS -->
 ## Acknowledgments
 
-* []()
-* []()
-* []()
-
-
-
+* [Best README Template](https://github.com/othneildrew/Best-README-Template)
+* [Choose an Open Source License](https://choosealicense.com)
 
 <!-- MARKDOWN LINKS & IMAGES -->
 <!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
@@ -194,14 +182,9 @@ Project Link: [https://github.com/Mandache-Eduard/flac-authenticator](https://gi
 [license-shield]: https://img.shields.io/github/license/github_username/repo_name.svg?style=for-the-badge
 [license-url]: https://github.com/github_username/repo_name/blob/master/LICENSE.txt
 [LinkedIn-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=for-the-badge&logo=linkedin&colorB=555
-[linkedin-url]: https://linkedin.com/in/linkedin_username
-
-
-<!-- Shields.io badges. You can a comprehensive list with many more badges at: https://github.com/inttter/md-badges -->
-[Python-badge]: https://img.shields.io/badge/Python-3.13-blue
+[LinkedIn-url]: https://linkedin.com/in/linkedin_username](https://www.linkedin.com/in/eduard-mandache-89588035b/
+[Python-shield]: https://img.shields.io/badge/Python-3.13-blue
 [Python-url]: https://www.python.org/
-
-
 
 [![Contributors][contributors-shield]][contributors-url]
 [![Forks][forks-shield]][forks-url]
