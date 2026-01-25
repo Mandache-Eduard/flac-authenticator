@@ -8,9 +8,9 @@ from audio_frame_analysis import analyze_frame, divide_into_frames, calculate_ny
     calculate_effective_cutoff
 from audio_loader import load_flac
 from external_tools import call_spek
-from file_status_determination import determine_file_status, debug_energy_ratios
+from file_status_determination import determine_file_status
 from data_and_error_logging import append_result_to_csv
-from pprint import pprint
+
 
 RESULT_FIELDNAMES: Final[List[str]] = [
     "path",
@@ -92,7 +92,6 @@ def run_single_file(file_path, verbose, open_spek):
     return result
 
 def run_folder_batch(folder_path):
-    start_time = time.time()
     current_datetime = datetime.now()
     current_daytime_formatted = current_datetime.strftime('%Y-%B-%d__%H-%M-%S')
     csv_path = os.path.join(folder_path, current_daytime_formatted + ".csv")
@@ -111,6 +110,5 @@ def run_folder_batch(folder_path):
         try:
             result = run_single_file(flac_file_path, verbose=False, open_spek=False)
         except Exception:
-            # Keep silent in terminal; still record a minimal row
             result = {"path": flac_file_path, "status": "ERROR"}
         append_result_to_csv(csv_path, result)

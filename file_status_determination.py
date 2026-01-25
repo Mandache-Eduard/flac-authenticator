@@ -150,15 +150,15 @@ def _estimate_bitrate_from_cache(frame_ffts, effective_cutoff, energy_ratio_thre
             selected_cutoff = quiet_cutoffs[0]
             selected_frac = per_cutoff_fractions[selected_cutoff]
         else:
-            return (None, None, per_cutoff_fractions)  # ← 3-tuple
+            return None, None, per_cutoff_fractions
 
     kbps = LOSSY_CUTOFF_PROFILES.get(selected_cutoff)
     if kbps is None:
-        return (None, None, per_cutoff_fractions)  # ← 3-tuple
+        return None, None, per_cutoff_fractions
 
     label = f"Likely UPSCALED from <={kbps} kbps"
     confidence = float(np.clip(1.0 - (selected_frac or 0.0), 0.0, 1.0))
-    return (label, confidence, per_cutoff_fractions)  # ← 3-tuple (normal case)
+    return label, confidence, per_cutoff_fractions
 
 def determine_file_status(ratios, effective_cutoff, frame_ffts=None, probe_cutoffs_hz=None):
     """
