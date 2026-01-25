@@ -112,14 +112,17 @@ ___
 ## Roadmap
 
 ### Future features
+- [ ] Implement different checks for .flac files
+- [ ] Add file recognition from MusicBrainz Picard Database/AcoustID!
 - [ ] Create a UI for ease of use
     - [ ] Rewrite program for multithreading (1 thread for UI, 1 thread for file processing)
+    - [ ] Provide both dark and light themes
 
 ### Features in development
 - [ ] Implement FFmpeg spectrogram creation for low-confidence files
-- [ ] Implement a loading bar to visualize progress
 
 ### Completed features
+- [X] Implement a loading bar to visualize progress
 - [X] Save results in a log file (.CSV)
 - [X] Scan a folder structure recursively
 - [X] Scan multiple files in one run
