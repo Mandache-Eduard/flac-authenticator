@@ -69,10 +69,11 @@ This project is currently in **an early, experimental stage** and should be cons
 ___
 
 <!-- GETTING STARTED -->
-## Getting Started
+## Requirements
 
-This is an example of how you may give instructions on setting up your project locally.
-To get a local copy up and running follow these simple example steps.
+Pyhton version: 3.14t (free-threaded)
+Python libraries: csv, os, sys, subprocess, shutil, numpy, soundfile, typing, tqdm, datetime
+External utilities: FFMPEG
 
 ___
 
@@ -112,8 +113,10 @@ ___
 ## Roadmap
 
 ### Future features
-- [ ] Implement different checks for .flac files
+- [ ] Implement a local database, to avoid scanning already scanned files and only focus on files added since last scan
+- [ ] Implement different checks for .flac files (audio artifacts, checksums, etc.)
 - [ ] Add file recognition from MusicBrainz Picard Database/AcoustID!
+    - [ ] Fetch metadata and let the user choose to update it
 - [ ] Create a UI for ease of use
     - [ ] Rewrite program for multithreading (1 thread for UI, 1 thread for file processing)
     - [ ] Provide both dark and light themes
@@ -126,9 +129,6 @@ ___
 - [X] Save results in a log file (.CSV)
 - [X] Scan a folder structure recursively
 - [X] Scan multiple files in one run
-
-
-See the [open issues](https://github.com/github_username/repo_name/issues) for a full list of proposed features (and known issues).
 
 ___
 
@@ -146,7 +146,7 @@ ___
 <!-- LICENSE -->
 ## License
 
-Distributed under the GNU General Public License v3.0. See `LICENSE` or click the link below for more information.
+Distributed under the GNU General Public License v3.0-only. See `LICENSE` or click the link below for more information.
 <br>
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
