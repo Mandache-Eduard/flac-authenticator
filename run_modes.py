@@ -7,7 +7,7 @@ from datetime import datetime
 from audio_frame_analysis import analyze_frame, divide_into_frames, calculate_nyquist_frequency, \
     calculate_effective_cutoff
 from audio_loader import load_flac
-from external_tools import call_spek
+from spectrogram_generator import spectrogram_for_flac
 from file_status_determination import determine_file_status
 from data_and_error_logging import append_result_to_csv
 
@@ -34,7 +34,7 @@ def _format_fractions_for_csv(fractions: Optional[Dict[float, float]]) -> str:
         return ""
     return ";".join(f"{int(k)}={v:.4f}" for k, v in sorted(fractions.items()))
 
-def run_single_file(file_path, verbose, open_spek):
+def run_single_file(file_path, want_verbose, want_spectrogram):
     # 1. Load audio
     start_time = time.time()
     data, samplerate = load_flac(file_path)
@@ -72,7 +72,7 @@ def run_single_file(file_path, verbose, open_spek):
         }
     )
 
-    if verbose:
+    if want_verbose:
         print(f"Loaded '{file_path}' with sample rate {samplerate} Hz, {len(data)} samples.")
         print(f"Divided audio into {len(frames)} frames for analysis.")
         print(f"Analyzed {len(frames)} frames ({sum(r > 0 for r in ratios)} active).")
@@ -86,8 +86,8 @@ def run_single_file(file_path, verbose, open_spek):
             for k, v in sorted(fractions.items()):
                 print(f"  {int(k)}: {v:.4f}")
 
-    if open_spek:
-        call_spek(file_path)
+    if want_spectrogram:
+        spectrogram_for_flac(file_path)
 
     return result
 
@@ -108,7 +108,7 @@ def run_folder_batch(folder_path):
     print("Processing files and saving results...")
     for flac_file_path in tqdm(flac_file_paths):
         try:
-            result = run_single_file(flac_file_path, verbose=False, open_spek=False)
+            result = run_single_file(flac_file_path, want_verbose=False, want_spectrogram=False)
         except Exception:
             result = {"path": flac_file_path, "status": "ERROR"}
         append_result_to_csv(csv_path, result)
