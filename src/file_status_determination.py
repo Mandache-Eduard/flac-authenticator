@@ -41,7 +41,7 @@ def debug_energy_ratios(ratios):
       - ratio is dimensionless and lies in [0, 1] for valid frames.
       - ratio ≈ 0 means "no meaningful content above cutoff for that frame".
       - ratio closer to 1 means "most of the frame's spectral energy is above cutoff"
-        (uncommon for music; usually indicates noise/artefacts or very HF-heavy content).
+        (uncommon for music; usually indicates noise/artifacts or very HF-heavy content).
 
     Returned dictionary keys
     ------------------------

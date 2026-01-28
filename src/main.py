@@ -29,7 +29,7 @@ def main():
         print("For example: python main.py X:\\path\\to\\file.flac")
         return
 
-    # 1. Get file path from command-line argument and determine running mode
+    # 1. Get file or folder path from command-line argument and determine running mode
     path = sys.argv[1]
 
     if os.path.isfile(path) and path.lower().endswith(".flac"):
