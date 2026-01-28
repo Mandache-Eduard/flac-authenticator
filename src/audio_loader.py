@@ -3,14 +3,14 @@ import numpy as np
 import soundfile as sf
 
 def load_flac(file_path):
-    """Loads a FLAC file and returns the audio data and sample rate."""
+    #Loads a FLAC file and returns the audio data and sample rate.
     try:
         data, samplerate = sf.read(file_path, always_2d=False)
 
-        # Ensure numpy array
+        # Ensure numpy array is used
         data = np.asarray(data)
 
-        # Convert to float32 (optional, but consistent and faster)
+        # Convert to float32
         if data.dtype.kind != "f":
             data = data.astype(np.float32)
         else:
