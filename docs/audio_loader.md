@@ -4,10 +4,12 @@
 - `soundfile` — FLAC decoding via libsndfile (`sf.read`).
 
 ## Module-level Constants and Variables
+### Key runtime variables (created/used by the module’s functions)
+
 - `data: np.ndarray`  
   Audio samples loaded from the FLAC file. Shape depends on the file:
   - mono: `(num_samples,)`
-  - multi-channel: `(num_samples, num_channels)` when returned by `sf.read` (implementation-dependent).  
+  - multichannel: `(num_samples, num_channels)` when returned by `sf.read` (implementation-dependent).  
   Normalized to `np.float32` and sanitized so it contains only finite values.
 
 - `samplerate: int`  
@@ -22,11 +24,11 @@ Audio decoded via `soundfile` can arrive as different numeric types depending on
 To ensure numerical stability, the loader checks whether the sample array contains any non-finite values (`NaN`, `+Inf`, `-Inf`). These values can arise from corruption, decoding edge cases, or unusual source pipelines, and they can propagate through computations (sums/means become `NaN`, infinities dominate scaling), breaking FFT-based analysis. Any non-finite samples are replaced with `0.0` (silence) using `np.nan_to_num`, producing a deterministic, robust output array suitable for further processing.
 
 
-## Module Workflow
+## Module Workflow (call graph)
 ```mermaid
 flowchart TD
-    classDef ok fill:#d4f4dd,stroke:#2e7d32;
-    classDef err fill:#fde0e0,stroke:#c62828;
+    classDef ok fill:#20462d,stroke:#2e7d32;
+    classDef err fill:#a1362a,stroke:#c62828;
 
     Start["load_flac(file_path)"]:::ok
     Read["sf.read(file_path) → (data, samplerate)"]:::ok
@@ -41,3 +43,7 @@ flowchart TD
     CheckFinite -->|Yes| ReturnOK
     CheckFinite -->|No| Sanitize --> ReturnOK
     Start -->|Exception| Fail
+```
+
+## Function Inventory
+* `load_flac(file_path)`

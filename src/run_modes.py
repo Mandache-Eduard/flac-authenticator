@@ -1,11 +1,11 @@
 # run_modes.py
 import time
 import os
+
 from typing import Any, Dict, Final, List, Optional
 from tqdm import tqdm
 from datetime import datetime
-from audio_frame_analysis import analyze_frame, divide_into_frames, calculate_nyquist_frequency, \
-    calculate_effective_cutoff
+from audio_frame_analysis import analyze_frame, divide_into_frames, calculate_effective_cutoff
 from audio_loader import load_flac
 from spectrogram_generator import spectrogram_for_flac
 from file_status_determination import determine_file_status
@@ -19,8 +19,8 @@ RESULT_FIELDNAMES: Final[List[str]] = [
     "elapsed_s",
     "samplerate_hz",
     "num_samples",
-    "num_frames",
-    "nyquist_frequency_hz",
+    "num_total_frames",
+    "num_non-silent_frames",
     "effective_cutoff_hz",
     "per_cutoff_active_fraction",
 ]
@@ -43,8 +43,7 @@ def run_single_file(file_path, want_verbose, want_spectrogram):
     frames = divide_into_frames(data)
 
     # 3. Calculate (once per file, then reuse everywhere)
-    nyquist_frequency_hz = calculate_nyquist_frequency(samplerate)
-    effective_cutoff_hz = calculate_effective_cutoff(nyquist_frequency_hz)
+    effective_cutoff_hz = calculate_effective_cutoff(samplerate)
 
     # 4. Analyze each frame — use the same 'effective_cutoff' for all frames; also collect FFT cache for later reuse
     fft_cache = []
@@ -65,8 +64,8 @@ def run_single_file(file_path, want_verbose, want_spectrogram):
             "elapsed_s": elapsed,
             "samplerate_hz": samplerate,
             "num_samples": len(data),
-            "num_frames": len(frames),
-            "nyquist_frequency_hz": nyquist_frequency_hz,
+            "num_total_frames": len(frames),
+            "num_non-silent_frames": sum(r > 0 for r in ratios),
             "effective_cutoff_hz": effective_cutoff_hz,
             "per_cutoff_active_fraction": _format_fractions_for_csv(fractions),
         }
@@ -75,11 +74,10 @@ def run_single_file(file_path, want_verbose, want_spectrogram):
     if want_verbose:
         print(f"Loaded '{file_path}' with sample rate {samplerate} Hz, {len(data)} samples.")
         print(f"Divided audio into {len(frames)} frames for analysis.")
-        print(f"Analyzed {len(frames)} frames ({sum(r > 0 for r in ratios)} active).")
+        print(f"Analyzed {len(frames)} frames ({sum(r > 0 for r in ratios)} non-silent).")
         print(f"Result: {status} (Confidence: {confidence * 100:.1f}%)")
         print(f"Processing time: {elapsed:.2f} seconds")
         print("Energy-above-cutoff summary:")
-        #pprint(summary)
 
         if fractions:
             print("[bitrate-debug] per_cutoff_active_fraction:")

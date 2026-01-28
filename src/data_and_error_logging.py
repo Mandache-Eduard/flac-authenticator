@@ -10,8 +10,8 @@ RESULT_FIELDNAMES = [
     "elapsed_s",
     "samplerate_hz",
     "num_samples",
-    "num_frames",
-    "nyquist_frequency_hz",
+    "num_total_frames",
+    "num_non-silent_frames",
     "effective_cutoff_hz",
     "per_cutoff_active_fraction",
 ]
