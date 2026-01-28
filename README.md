@@ -29,7 +29,7 @@ ___
   <ol>
     <li><a href="#about-the-project">About The Project</a></li>
     <li><a href="#disclaimer">Disclaimer</a></li>
-    <li><a href="#requierements">Requirements</a></li>
+    <li><a href="#requirements">Requirements</a></li>
     <li><a href="#installation">Installation</a></li>
     <li><a href="#usage">Usage</a></li>
     <li><a href="#roadmap">Roadmap</a></li>
